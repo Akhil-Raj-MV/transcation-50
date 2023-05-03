@@ -12,11 +12,6 @@ const {
 } = require("@solana/web3.js");
 
 
-// Making a keypair and getting the private key
-const newPair = Keypair.generate();
-console.log(newPair);
-
-// paste your secret that is logged here
 const DEMO_FROM_SECRET_KEY = new Uint8Array(
   // paste your secret key array here
     [
@@ -35,41 +30,50 @@ const transferSol = async() => {
     // Get Keypair from Secret Key
     var from = Keypair.fromSecretKey(DEMO_FROM_SECRET_KEY);
 
-    // Other things to try: 
-    // 1) Form array from userSecretKey
-    // const from = Keypair.fromSecretKey(Uint8Array.from(userSecretKey));
-    // 2) Make a new Keypair (starts with 0 SOL)
-    // const from = Keypair.generate();
-
     // Generate another Keypair (account we'll be sending to)
     const to = Keypair.generate();
 
-    // Aidrop 2 SOL to Sender wallet
-    console.log("Airdopping some SOL to Sender wallet!");
-    const fromAirDropSignature = await connection.requestAirdrop(
-        new PublicKey(from.publicKey),
-        2 * LAMPORTS_PER_SOL
-    );
+    const from_balance= await connection.getBalance(from.publicKey);
+    const to_balance=await connection.getBalance(to.publicKey);
+    console.log(`From Wallet balance before transaction is ${from_balance/10 ** 9}`);
+    console.log(`To Wallet balance before transaction is ${to_balance/10 ** 9}`);
 
-    // Latest blockhash (unique identifer of the block) of the cluster
-    let latestBlockHash = await connection.getLatestBlockhash();
 
-    // Confirm transaction using the last valid block height (refers to its time)
-    // to check for transaction expiration
-    await connection.confirmTransaction({
-        blockhash: latestBlockHash.blockhash,
-        lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
-        signature: fromAirDropSignature
-    });
 
-    console.log("Airdrop completed for the Sender account");
+    // // Aidrop 2 SOL to Sender wallet
+    // console.log("Airdopping some SOL to Sender wallet!");
+    // try {
+    //         const fromAirDropSignature = await connection.requestAirdrop(
+    //             new PublicKey(from.publicKey),
+    //             2 * LAMPORTS_PER_SOL
+    //         );
+
+    //          // Latest blockhash (unique identifer of the block) of the cluster
+    // let latestBlockHash = await connection.getLatestBlockhash();
+
+    // // Confirm transaction using the last valid block height (refers to its time)
+    // // to check for transaction expiration
+    // await connection.confirmTransaction({
+    //     blockhash: latestBlockHash.blockhash,
+    //     lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
+    //     signature: fromAirDropSignature
+    // });
+
+    // console.log("Airdrop completed for the Sender account");
+
+
+    // } catch (error) {
+    //     console.log(error)
+    // }
 
     // Send money from "from" wallet and into "to" wallet
+    const transfer_amount=Math.floor(from_balance/2);
+    console.log(`Sending ${transfer_amount/10**9} SOL from FROM wallet to TO wallet`)
     var transaction = new Transaction().add(
         SystemProgram.transfer({
             fromPubkey: from.publicKey,
             toPubkey: to.publicKey,
-            lamports: LAMPORTS_PER_SOL / 100
+            lamports: transfer_amount
         })
     );
 
@@ -80,6 +84,11 @@ const transferSol = async() => {
         [from]
     );
     console.log('Signature is', signature);
+    
+    const from_balance_after =await connection.getBalance(from.publicKey)
+    const to_balance_after=await connection.getBalance(to.publicKey);
+    console.log(`From wallet balance after transcation is ${from_balance_after/10 ** 9}`);
+    console.log(`To Wallet balance after transcation is ${to_balance_after/10 ** 9}`);
 }
 
 transferSol();
